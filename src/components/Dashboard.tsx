@@ -3,6 +3,7 @@ import {
   DailyPrayerRecord,
   FastingDay,
   GoodDeedLog,
+  JournalEntry,
   QuranSession,
   SpiritualBadge,
   SpiritualGradeBreakdown,
@@ -22,7 +23,8 @@ import {
   TrendingUp,
   Clock,
   Heart,
-  Activity
+  Activity,
+  PenLine
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -48,6 +50,7 @@ interface DashboardProps {
   tasbeehRecords: TasbeehRecord[];
   goodDeedsToday: GoodDeedLog[];
   badges: SpiritualBadge[];
+  journalEntryToday?: JournalEntry;
   onNavigate: (tab: string) => void;
   onOpenQuickLog: () => void;
   monthlyHistory: { date: string; grade: number }[];
@@ -65,6 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   tasbeehRecords,
   goodDeedsToday,
   badges,
+  journalEntryToday,
   onNavigate,
   onOpenQuickLog,
   monthlyHistory,
@@ -278,12 +282,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div>
                 <div className="flex justify-between text-stone-600 dark:text-stone-400 mb-1">
                   <span>Charity & Voluntary Good Deeds</span>
-                  <span className="font-mono tabular-nums">{currentGrade.deedsScore.toFixed(1)} / 1.5</span>
+                  <span className="font-mono tabular-nums">{currentGrade.deedsScore.toFixed(1)} / 1.3</span>
                 </div>
                 <div className="w-full h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-indigo-600 dark:bg-indigo-400 rounded-full transition-all"
-                    style={{ width: `${(currentGrade.deedsScore / 1.5) * 100}%` }}
+                    style={{ width: `${(currentGrade.deedsScore / 1.3) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-stone-600 dark:text-stone-400 mb-1">
+                  <span>Daily Journal (Muhasabah Reflection)</span>
+                  <span className="font-mono tabular-nums font-bold text-violet-700 dark:text-violet-400">
+                    {(currentGrade.journalScore || 0).toFixed(1)} / 1.2
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-violet-600 dark:bg-violet-400 rounded-full transition-all"
+                    style={{ width: `${((currentGrade.journalScore || 0) / 1.2) * 100}%` }}
                   />
                 </div>
               </div>
@@ -459,6 +478,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                     <div className="text-[11px] text-stone-500 dark:text-stone-400">
                       {fastingToday?.isFasting ? 'Fasting today (Active)' : 'Not fasting today'}
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400 group-hover:translate-x-1 transition-transform" />
+              </div>
+
+              {/* Daily Spiritual Journal / Muhasabah */}
+              <div
+                onClick={() => onNavigate('journal')}
+                className="py-3 flex items-center justify-between cursor-pointer group hover:bg-stone-50 dark:hover:bg-emerald-950/20 px-2 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <PenLine className="w-4 h-4 text-violet-700 dark:text-violet-400" />
+                  <div>
+                    <div className="text-xs font-semibold text-stone-900 dark:text-stone-100 group-hover:text-violet-800 flex items-center gap-1.5">
+                      <span>Daily Spiritual Journal</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-sm bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300">
+                        +1.2 pts
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-stone-500 dark:text-stone-400">
+                      {journalEntryToday
+                        ? `Reflection logged: State of ${journalEntryToday.heartState.toUpperCase()}`
+                        : 'Record today’s Muhasabah reflection'}
                     </div>
                   </div>
                 </div>

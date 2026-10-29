@@ -24,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'namaz', label: 'Namaz & Qibla' },
     { id: 'quran', label: 'Daily Quran' },
+    { id: 'journal', label: 'Daily Journal' },
     { id: 'fasting_zakat', label: 'Roza & Zakat' },
     { id: 'prayers', label: 'Prayers Book' },
     { id: 'levels', label: 'Spiritual Levels' },

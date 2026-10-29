@@ -18,6 +18,7 @@ import {
   DailyPrayerRecord,
   FastingDay,
   GoodDeedLog,
+  JournalEntry,
   QuranSession
 } from '../types/islamic';
 
@@ -31,6 +32,7 @@ interface AuthContextType {
   syncGoodDeedToCloud: (deed: GoodDeedLog) => Promise<void>;
   syncFastingToCloud: (fast: FastingDay) => Promise<void>;
   syncProfileToCloud: (streak: number, points: number, level: number) => Promise<void>;
+  syncJournalToCloud: (entry: JournalEntry) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,6 +194,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const syncJournalToCloud = async (entry: JournalEntry) => {
+    if (!user) return;
+    const path = `users/${user.uid}/journal_entries/${entry.id}`;
+    try {
+      await setDoc(doc(db, 'users', user.uid, 'journal_entries', entry.id), {
+        id: entry.id,
+        userId: user.uid,
+        date: entry.date,
+        title: entry.title,
+        content: entry.content,
+        heartState: entry.heartState,
+        blessingGratitude: entry.blessingGratitude || '',
+        istighfarReflection: entry.istighfarReflection || '',
+        tomorrowIntention: entry.tomorrowIntention || '',
+        tags: entry.tags || [],
+        createdAt: entry.createdAt,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -204,6 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         syncGoodDeedToCloud,
         syncFastingToCloud,
         syncProfileToCloud,
+        syncJournalToCloud,
       }}
     >
       {children}

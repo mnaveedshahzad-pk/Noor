@@ -3,6 +3,7 @@ import {
   DailyPrayerRecord,
   FastingDay,
   GoodDeedLog,
+  JournalEntry,
   QuranBookmark,
   QuranSession,
   SpiritualBadge,
@@ -23,6 +24,7 @@ const STORAGE_KEYS = {
   TASBEEH_ITEMS: 'noor_tasbeeh_items_v1',
   BADGES: 'noor_badges_v1',
   GOOD_DEEDS: 'noor_good_deeds_v1',
+  JOURNAL_ENTRIES: 'noor_journal_entries_v1',
   USER_LOCATION: 'noor_user_location_v1',
   THEME_MODE: 'noor_theme_mode_v1',
   CURRENT_STREAK: 'noor_current_streak_v1',
@@ -416,4 +418,66 @@ export function loadStreak(): number {
 
 export function saveStreak(streak: number): void {
   localStorage.setItem(STORAGE_KEYS.CURRENT_STREAK, streak.toString());
+}
+
+export function loadJournalEntries(): JournalEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.JOURNAL_ENTRIES);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error(e);
+  }
+  const seeded: JournalEntry[] = [
+    {
+      id: 'journal_today',
+      date: getTodayKey(),
+      title: 'Dawn Peace & The Fragility of Time',
+      content:
+        'Woke up early for Fajr and felt a profound stillness in the room. Recited Surah Ya-Sin with contemplation on how quickly weeks slip away. Praying in congregation reminded me that every moment spent in Allah’s remembrance anchors the restless heart.',
+      heartState: 'sakinah',
+      blessingGratitude: 'Grateful for good health, quiet morning solitude, and parents’ affectionate prayers.',
+      istighfarReflection: 'Sought forgiveness for hasty impatient speech during busy work hours.',
+      tomorrowIntention: 'Strive to pray Salatul Duha consistently and give unexpected anonymous charity.',
+      tags: ['Sakinah', 'Fajr', 'Gratitude', 'Istighfar'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'journal_yesterday',
+      date: getPastDateKey(1),
+      title: 'Tawakkul Amidst Uncertainty',
+      content:
+        'Encountered an unexpected difficulty in a work project today. Instead of getting agitated, I took wudu, prayed 2 rak’ahs, and recited "HasbunAllahu wa ni‘mal Wakeel". Immediate calmness descended. Realized our role is only honest effort, while the outcomes belong to Al-Wakeel.',
+      heartState: 'tawakkul',
+      blessingGratitude: 'For the blessing of Islam and knowing that trials are tests of endurance (Sabr).',
+      istighfarReflection: 'Asked Allah to cleanse my intentions of pride (Riyaa) and self-sufficiency.',
+      tomorrowIntention: 'Recite at least 5 pages of the Holy Quran before checking notifications.',
+      tags: ['Tawakkul', 'Sabr', 'PeaceOfHeart'],
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ];
+  localStorage.setItem(STORAGE_KEYS.JOURNAL_ENTRIES, JSON.stringify(seeded));
+  return seeded;
+}
+
+export function saveJournalEntry(entry: JournalEntry): JournalEntry[] {
+  const list = loadJournalEntries();
+  const existingIdx = list.findIndex((e) => e.id === entry.id || e.date === entry.date);
+  let updated: JournalEntry[];
+  if (existingIdx >= 0) {
+    updated = [...list];
+    updated[existingIdx] = entry;
+  } else {
+    updated = [entry, ...list];
+  }
+  localStorage.setItem(STORAGE_KEYS.JOURNAL_ENTRIES, JSON.stringify(updated));
+  return updated;
+}
+
+export function deleteJournalEntry(id: string): JournalEntry[] {
+  const list = loadJournalEntries();
+  const updated = list.filter((e) => e.id !== id);
+  localStorage.setItem(STORAGE_KEYS.JOURNAL_ENTRIES, JSON.stringify(updated));
+  return updated;
 }

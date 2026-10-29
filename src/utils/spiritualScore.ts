@@ -2,6 +2,7 @@ import {
   DailyPrayerRecord,
   FastingDay,
   GoodDeedLog,
+  JournalEntry,
   QuranSession,
   SpiritualGradeBreakdown,
   TasbeehRecord
@@ -13,60 +14,61 @@ export function calculateSpiritualGrade(
   tasbeehRecords: TasbeehRecord[],
   fastingRecord?: FastingDay,
   deedsToday: GoodDeedLog[] = [],
-  dailyQuranGoalPages: number = 4
+  dailyQuranGoalPages: number = 4,
+  journalEntryToday?: JournalEntry
 ): SpiritualGradeBreakdown {
-  // 1. Namaz Observance (max 4.0)
+  // 1. Namaz Observance (max 3.5)
   let namazScore = 0;
   const prayers = prayerRecord.prayers;
   const fardhList = [prayers.Fajr, prayers.Dhuhr, prayers.Asr, prayers.Maghrib, prayers.Isha];
 
   fardhList.forEach((status) => {
     if (status === 'jamaah') {
-      namazScore += 0.5 + 0.15; // base + jama'ah bonus
+      namazScore += 0.45 + 0.15; // base + jama'ah bonus
     } else if (status === 'on_time') {
-      namazScore += 0.5 + 0.08; // base + on time bonus
+      namazScore += 0.45 + 0.08; // base + on time bonus
     } else if (status === 'late' || status === 'qada') {
-      namazScore += 0.35; // fulfilled
+      namazScore += 0.3; // fulfilled
     }
   });
 
   // Sunnah & Nawafil bonus
-  if (prayerRecord.optionalPrayers.tahajjud) namazScore += 0.35;
+  if (prayerRecord.optionalPrayers.tahajjud) namazScore += 0.3;
   if (prayerRecord.optionalPrayers.duha) namazScore += 0.15;
-  if (prayerRecord.optionalPrayers.witr) namazScore += 0.2;
+  if (prayerRecord.optionalPrayers.witr) namazScore += 0.15;
   if (prayerRecord.optionalPrayers.rawatibCount >= 8) namazScore += 0.2;
 
-  namazScore = Math.min(4.0, Math.round(namazScore * 10) / 10);
+  namazScore = Math.min(3.5, Math.round(namazScore * 10) / 10);
 
-  // 2. Quran Engagement (max 2.0)
+  // 2. Quran Engagement (max 1.8)
   let quranScore = 0;
   const totalPagesToday = quranSessionsToday.reduce((sum, s) => sum + s.pagesRead, 0);
   const pagesRatio = Math.min(1.0, totalPagesToday / Math.max(1, dailyQuranGoalPages));
-  quranScore += pagesRatio * 1.5;
+  quranScore += pagesRatio * 1.3;
 
   const hasReflection = quranSessionsToday.some((s) => s.reflectionNotes && s.reflectionNotes.trim().length > 0);
   if (hasReflection) {
     quranScore += 0.5;
   }
-  quranScore = Math.min(2.0, Math.round(quranScore * 10) / 10);
+  quranScore = Math.min(1.8, Math.round(quranScore * 10) / 10);
 
-  // 3. Adhkar & Dhikr (max 1.5)
+  // 3. Adhkar & Dhikr (max 1.2)
   let adhkarScore = 0;
   const totalTasbeehCount = tasbeehRecords.reduce((sum, t) => sum + t.count, 0);
   if (totalTasbeehCount >= 100) {
-    adhkarScore += 0.9;
+    adhkarScore += 0.7;
   } else if (totalTasbeehCount >= 33) {
-    adhkarScore += 0.5;
+    adhkarScore += 0.4;
   } else if (totalTasbeehCount > 0) {
-    adhkarScore += 0.25;
+    adhkarScore += 0.2;
   }
 
   // Morning / Evening completion check from tasbeeh
   const hasIstighfar = tasbeehRecords.find((t) => t.id === 'astaghfirullah')?.count || 0;
   if (hasIstighfar >= 70) {
-    adhkarScore += 0.6;
+    adhkarScore += 0.5;
   }
-  adhkarScore = Math.min(1.5, Math.round(adhkarScore * 10) / 10);
+  adhkarScore = Math.min(1.2, Math.round(adhkarScore * 10) / 10);
 
   // 4. Fasting / Self-Discipline (max 1.0)
   let fastingScore = 0;
@@ -77,15 +79,29 @@ export function calculateSpiritualGrade(
     fastingScore = 0.3;
   }
 
-  // 5. Deeds & Charity (max 1.5)
+  // 5. Deeds & Charity (max 1.3)
   let deedsScore = 0;
   if (deedsToday.length > 0) {
-    deedsScore = Math.min(1.5, deedsToday.length * 0.5);
+    deedsScore = Math.min(1.3, deedsToday.length * 0.45);
   }
-  deedsScore = Math.min(1.5, Math.round(deedsScore * 10) / 10);
+  deedsScore = Math.min(1.3, Math.round(deedsScore * 10) / 10);
+
+  // 6. Daily Journal / Muhasabah Reflection (max 1.2)
+  let journalScore = 0;
+  if (journalEntryToday && journalEntryToday.content.trim().length > 0) {
+    journalScore += 0.8;
+    if (
+      journalEntryToday.blessingGratitude.trim().length > 0 ||
+      journalEntryToday.istighfarReflection.trim().length > 0 ||
+      journalEntryToday.tomorrowIntention.trim().length > 0
+    ) {
+      journalScore += 0.4;
+    }
+  }
+  journalScore = Math.min(1.2, Math.round(journalScore * 10) / 10);
 
   // Total Grade (Floor at 1.0, Ceil at 10.0)
-  let overall = namazScore + quranScore + adhkarScore + fastingScore + deedsScore;
+  let overall = namazScore + quranScore + adhkarScore + fastingScore + deedsScore + journalScore;
   overall = Math.max(1.0, Math.min(10.0, Math.round(overall * 10) / 10));
 
   let gradeTitle = 'Needs Renewal';
@@ -121,6 +137,9 @@ export function calculateSpiritualGrade(
   if (fastingRecord?.isFasting) {
     insights.push(`Fasting observed today (${fastingRecord.type.toUpperCase()}); prayers at Iftar are answered.`);
   }
+  if (journalEntryToday && journalEntryToday.content.trim().length > 0) {
+    insights.push(`Spiritual reflection (Muhasabah) recorded: Heart in state of ${journalEntryToday.heartState.toUpperCase()} (+1.2 to grade).`);
+  }
 
   // Actionable recommendations
   if (prayers.Fajr === 'unlogged' || prayers.Fajr === 'missed') {
@@ -128,6 +147,9 @@ export function calculateSpiritualGrade(
   }
   if (totalPagesToday < dailyQuranGoalPages) {
     recommendations.push(`Recite ${dailyQuranGoalPages - totalPagesToday} more page(s) of Quran to hit your target.`);
+  }
+  if (!journalEntryToday || journalEntryToday.content.trim().length === 0) {
+    recommendations.push('Log a brief spiritual reflection in your Daily Journal to elevate today’s grade (+1.2 pts).');
   }
   if (!prayerRecord.optionalPrayers.witr) {
     recommendations.push('Offer at least 1 or 3 rak’ahs of Salatul Witr before sleeping.');
@@ -148,7 +170,8 @@ export function calculateSpiritualGrade(
     adhkarScore,
     fastingScore,
     deedsScore,
-    insights: insights.length > 0 ? insights : ['Begin today by logging your prayers and Quran reading.'],
+    journalScore,
+    insights: insights.length > 0 ? insights : ['Begin today by logging your prayers, Quran reading, and daily journal reflection.'],
     recommendations: recommendations.length > 0 ? recommendations : ['Masha’Allah! Continue your steadfastness and seek sincerity (Ikhlas).'],
   };
 }

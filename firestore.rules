@@ -55,6 +55,11 @@ service cloud.firestore {
       match /zakat_disbursements/{disbursementId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Spiritual Journal & Muhasabah Subcollection
+      match /journal_entries/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 }

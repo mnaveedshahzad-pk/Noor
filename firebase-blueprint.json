@@ -71,6 +71,25 @@
         "createdAt": { "type": "string" }
       },
       "required": ["id", "userId", "date", "category", "title"]
+    },
+    "JournalEntryRecord": {
+      "title": "JournalEntryRecord",
+      "description": "Daily spiritual reflection and Muhasabah journal entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "title": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "heartState": { "type": "string", "enum": ["sakinah", "shukr", "tawakkul", "tawbah", "rajaa", "sabr"] },
+        "blessingGratitude": { "type": "string", "maxLength": 2000 },
+        "istighfarReflection": { "type": "string", "maxLength": 2000 },
+        "tomorrowIntention": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date", "content", "heartState"]
     }
   },
   "firestore": {
@@ -89,6 +108,10 @@
     "/users/{userId}/good_deeds/{deedId}": {
       "schema": "GoodDeedRecord",
       "description": "User logged good deeds"
+    },
+    "/users/{userId}/journal_entries/{entryId}": {
+      "schema": "JournalEntryRecord",
+      "description": "User spiritual reflections and Muhasabah journal entries"
     }
   }
 }

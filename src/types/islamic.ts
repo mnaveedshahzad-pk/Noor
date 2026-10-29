@@ -107,13 +107,31 @@ export interface SpiritualGradeBreakdown {
   overallGrade: number; // 1.0 to 10.0
   gradeTitle: string;
   gradeArabic: string;
-  namazScore: number; // out of 4.0
-  quranScore: number; // out of 2.0
-  adhkarScore: number; // out of 1.5
+  namazScore: number; // out of 3.5
+  quranScore: number; // out of 1.8
+  adhkarScore: number; // out of 1.2
   fastingScore: number; // out of 1.0
-  deedsScore: number; // out of 1.5
+  deedsScore: number; // out of 1.3
+  journalScore: number; // out of 1.2 (Muhasabah & spiritual reflections)
   insights: string[];
   recommendations: string[];
+}
+
+export type HeartState = 'sakinah' | 'shukr' | 'tawakkul' | 'tawbah' | 'rajaa' | 'sabr';
+
+export interface JournalEntry {
+  id: string;
+  userId?: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  content: string;
+  heartState: HeartState;
+  blessingGratitude: string;
+  istighfarReflection: string;
+  tomorrowIntention: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SpiritualBadge {
@@ -141,3 +159,4 @@ export interface CityLocation {
   longitude: number;
   timezone: string;
 }
+

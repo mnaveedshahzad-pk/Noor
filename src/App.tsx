@@ -9,6 +9,7 @@ import {
   DailyPrayerRecord,
   FastingDay,
   GoodDeedLog,
+  JournalEntry,
   PrayerName,
   PrayerStatus,
   QuranBookmark,
@@ -20,11 +21,13 @@ import {
   ZakatDisbursement
 } from './types/islamic';
 import {
+  deleteJournalEntry,
   getPastDateKey,
   getTodayKey,
   loadBadges,
   loadFastingHistory,
   loadGoodDeeds,
+  loadJournalEntries,
   loadPrayerRecords,
   loadQuranBookmark,
   loadQuranSessions,
@@ -35,6 +38,7 @@ import {
   loadZakatDisbursements,
   saveFastingDay,
   saveGoodDeed,
+  saveJournalEntry,
   savePrayerRecord,
   saveQuranBookmark,
   saveQuranSession,
@@ -51,13 +55,14 @@ import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { NamazLogger } from './components/NamazLogger';
 import { QuranTracker } from './components/QuranTracker';
+import { DailyJournal } from './components/DailyJournal';
 import { RozaTracker } from './components/RozaTracker';
 import { ZakaatCalculator } from './components/ZakaatCalculator';
 import { PrayersBook } from './components/PrayersBook';
 import { SpiritualLevels } from './components/SpiritualLevels';
 import { LogDeedModal } from './components/LogDeedModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { UtensilsCrossed, Coins, CloudCheck } from 'lucide-react';
+import { UtensilsCrossed, Coins } from 'lucide-react';
 
 function AppContent() {
   const {
@@ -67,6 +72,7 @@ function AppContent() {
     syncGoodDeedToCloud,
     syncFastingToCloud,
     syncProfileToCloud,
+    syncJournalToCloud,
   } = useAuth();
 
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -96,6 +102,7 @@ function AppContent() {
   const [tasbeehRecords, setTasbeehRecords] = useState<TasbeehRecord[]>(() => loadTasbeehItems());
   const [badges, setBadges] = useState<SpiritualBadge[]>(() => loadBadges());
   const [goodDeeds, setGoodDeeds] = useState<GoodDeedLog[]>(() => loadGoodDeeds());
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => loadJournalEntries());
   const [userLocation, setUserLocation] = useState<CityLocation>(() => loadUserLocation());
   const [streak, setStreak] = useState<number>(() => loadStreak());
 
@@ -144,7 +151,11 @@ function AppContent() {
     return goodDeeds.filter((d) => d.date === todayKey);
   }, [goodDeeds, todayKey]);
 
-  // Calculate Real-time Spiritual Grade for Today (1-10)
+  const todayJournal = useMemo(() => {
+    return journalEntries.find((e) => e.date === todayKey);
+  }, [journalEntries, todayKey]);
+
+  // Calculate Real-time Spiritual Grade for Today (1-10) factoring in Daily Journal
   const currentGrade = useMemo(() => {
     return calculateSpiritualGrade(
       todayPrayers,
@@ -152,9 +163,10 @@ function AppContent() {
       tasbeehRecords,
       todayFasting,
       todayDeeds,
-      4 // 4 pages daily goal
+      4, // 4 pages daily goal
+      todayJournal
     );
-  }, [todayPrayers, todayQuranSessions, tasbeehRecords, todayFasting, todayDeeds]);
+  }, [todayPrayers, todayQuranSessions, tasbeehRecords, todayFasting, todayDeeds, todayJournal]);
 
   // Cumulative Points across all activities for Level Progression
   const totalPoints = useMemo(() => {
@@ -164,8 +176,9 @@ function AppContent() {
     pts += Math.floor(tasbeehRecords.reduce((sum, t) => sum + t.count, 0) / 5);
     pts += Object.values(fastingHistory).filter((f) => f.isFasting).length * 50;
     pts += goodDeeds.reduce((sum, d) => sum + d.points, 0);
+    pts += journalEntries.length * 20; // 20 points per spiritual reflection
     return pts;
-  }, [prayerRecords, quranSessions, tasbeehRecords, fastingHistory, goodDeeds]);
+  }, [prayerRecords, quranSessions, tasbeehRecords, fastingHistory, goodDeeds, journalEntries]);
 
   // Determine current spiritual level
   const currentLevelIndex = useMemo(() => {
@@ -198,14 +211,15 @@ function AppContent() {
         const qSess = quranSessions.filter((s) => s.date === dKey);
         const fast = fastingHistory[dKey];
         const dLogs = goodDeeds.filter((d) => d.date === dKey);
-        const brk = calculateSpiritualGrade(pr, qSess, tasbeehRecords, fast, dLogs);
+        const jLog = journalEntries.find((e) => e.date === dKey);
+        const brk = calculateSpiritualGrade(pr, qSess, tasbeehRecords, fast, dLogs, 4, jLog);
         list.push({ date: dKey, grade: brk.overallGrade });
       } else {
         list.push({ date: dKey, grade: 6.0 });
       }
     }
     return list;
-  }, [prayerRecords, quranSessions, fastingHistory, goodDeeds, tasbeehRecords]);
+  }, [prayerRecords, quranSessions, fastingHistory, goodDeeds, journalEntries, tasbeehRecords]);
 
   // Handlers for Namaz Updates
   const handleUpdatePrayer = (name: PrayerName, status: PrayerStatus) => {
@@ -286,6 +300,21 @@ function AppContent() {
   const handleSaveQuranBookmark = (bm: QuranBookmark) => {
     saveQuranBookmark(bm);
     setQuranBookmark(bm);
+  };
+
+  // Handlers for Daily Journal
+  const handleSaveJournalEntry = (entry: JournalEntry) => {
+    const updated = saveJournalEntry(entry);
+    setJournalEntries(updated);
+
+    if (user) {
+      syncJournalToCloud(entry);
+    }
+  };
+
+  const handleDeleteJournalEntry = (id: string) => {
+    const updated = deleteJournalEntry(id);
+    setJournalEntries(updated);
   };
 
   // Handlers for Roza
@@ -393,6 +422,7 @@ function AppContent() {
             tasbeehRecords={tasbeehRecords}
             goodDeedsToday={todayDeeds}
             badges={badges}
+            journalEntryToday={todayJournal}
             onNavigate={setActiveTab}
             onOpenQuickLog={() => setIsLogDeedOpen(true)}
             monthlyHistory={monthlyHistory}
@@ -417,6 +447,15 @@ function AppContent() {
             onSaveBookmark={handleSaveQuranBookmark}
             onLogSession={handleLogQuranSession}
             dailyGoalPages={4}
+          />
+        )}
+
+        {activeTab === 'journal' && (
+          <DailyJournal
+            entries={journalEntries}
+            onSaveEntry={handleSaveJournalEntry}
+            onDeleteEntry={handleDeleteJournalEntry}
+            todayKey={todayKey}
           />
         )}
 
