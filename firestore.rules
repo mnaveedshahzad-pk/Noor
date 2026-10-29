@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // User Profile Document
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      // Daily Prayers Subcollection
+      match /prayers/{date} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Quran Sessions Subcollection
+      match /quran_sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Good Deeds Subcollection
+      match /good_deeds/{deedId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Fasting History Subcollection
+      match /fasting/{date} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Zakat Configuration & History
+      match /zakat/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Zakat Disbursements
+      match /zakat_disbursements/{disbursementId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}

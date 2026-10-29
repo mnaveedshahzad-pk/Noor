@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing authentication and spiritual metrics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "currentStreak": { "type": "number" },
+        "totalPoints": { "type": "number" },
+        "currentLevel": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "email"]
+    },
+    "PrayerRecord": {
+      "title": "PrayerRecord",
+      "description": "Daily prayer observance record for a specific date",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "fajr": { "type": "string", "enum": ["jamaah", "on_time", "late", "qada", "missed", "unlogged"] },
+        "dhuhr": { "type": "string", "enum": ["jamaah", "on_time", "late", "qada", "missed", "unlogged"] },
+        "asr": { "type": "string", "enum": ["jamaah", "on_time", "late", "qada", "missed", "unlogged"] },
+        "maghrib": { "type": "string", "enum": ["jamaah", "on_time", "late", "qada", "missed", "unlogged"] },
+        "isha": { "type": "string", "enum": ["jamaah", "on_time", "late", "qada", "missed", "unlogged"] },
+        "tahajjud": { "type": "boolean" },
+        "duha": { "type": "boolean" },
+        "witr": { "type": "boolean" },
+        "rawatibCount": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "date"]
+    },
+    "QuranSessionRecord": {
+      "title": "QuranSessionRecord",
+      "description": "Logged daily Quran reading session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "surahNumber": { "type": "number" },
+        "surahName": { "type": "string", "maxLength": 60 },
+        "fromAyah": { "type": "number" },
+        "toAyah": { "type": "number" },
+        "pagesRead": { "type": "number" },
+        "durationMinutes": { "type": "number" },
+        "reflectionNotes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date", "surahNumber", "pagesRead"]
+    },
+    "GoodDeedRecord": {
+      "title": "GoodDeedRecord",
+      "description": "Logged good deed or charitable action",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string", "maxLength": 30 },
+        "title": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "points": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date", "category", "title"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile with spiritual progression metrics"
+    },
+    "/users/{userId}/prayers/{date}": {
+      "schema": "PrayerRecord",
+      "description": "User daily prayers logs"
+    },
+    "/users/{userId}/quran_sessions/{sessionId}": {
+      "schema": "QuranSessionRecord",
+      "description": "User Quran reading sessions"
+    },
+    "/users/{userId}/good_deeds/{deedId}": {
+      "schema": "GoodDeedRecord",
+      "description": "User logged good deeds"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Noor: Islamic Spiritual Companion & Tracker",
+  "description": "A premium Islamic companion featuring an interactive Namaz logger, Qibla compass, Quran reading tracker, Roza fasting journal, Zakat calculator & ledger, Prayers book with Tasbeeh, and a 1-10 spiritual grading system with streaks and level progression.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
